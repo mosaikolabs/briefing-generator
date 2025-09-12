@@ -44,13 +44,6 @@ export const useChat = () => {
     
     setMessages(prev => [...prev, userMsg]);
     
-    // Extraer información del primer mensaje (empresa y colores)
-    if (currentStep === 1) {
-      const colors = extractColors(userMessage);
-      const companyName = extractCompanyName(userMessage);
-      updateBrandingColors(colors.primary, colors.secondary, companyName);
-    }
-    
     try {
       const allMessages = [...messages, userMsg];
       const aiResponse = await sendMessageToClaude(allMessages.map(msg => ({ role: msg.role, content: msg.content })));
@@ -64,16 +57,37 @@ export const useChat = () => {
       
       setMessages(prev => [...prev, aiMsg]);
       
-      // Avanzar al siguiente paso
-      if (currentStep < 8) {
-        setCurrentStep(prev => prev + 1);
-      } else {
-        setIsComplete(true);
-        await sendBriefingToMake(briefingData, aiResponse);
+      // Solo avanzar si la respuesta no es de validación
+      const isValidationMessage = aiResponse.toLowerCase().includes('necesito') || 
+                                  aiResponse.toLowerCase().includes('podrías') ||
+                                  aiResponse.toLowerCase().includes('específica');
+      
+      if (!isValidationMessage) {
+        // Extraer información del primer mensaje (empresa y colores)
+        if (currentStep === 1) {
+          const colors = extractColors(userMessage);
+          const companyName = extractCompanyName(userMessage);
+          updateBrandingColors(colors.primary, colors.secondary, companyName);
+        }
+        
+        // Avanzar al siguiente paso
+        if (currentStep < 8) {
+          setCurrentStep(prev => prev + 1);
+        } else {
+          setIsComplete(true);
+          await sendBriefingToMake(briefingData, aiResponse);
+        }
       }
       
     } catch (error) {
       console.error('Error:', error);
+      const errorMsg: ChatMessage = {
+        id: (Date.now() + 2).toString(),
+        role: 'assistant',
+        content: 'Disculpa, hubo un error. ¿Podrías intentar de nuevo?',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
