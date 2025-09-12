@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-client-primary: #3B82F6;
+  --color-client-secondary: #1E40AF;
+}
+
+.client-primary {
+  background-color: var(--color-client-primary);
+}
+
+.client-secondary {
+  background-color: var(--color-client-secondary);
+}
+
+.client-primary-text {
+  color: var(--color-client-primary);
+}
+
+.client-secondary-text {
+  color: var(--color-client-secondary);
+}
