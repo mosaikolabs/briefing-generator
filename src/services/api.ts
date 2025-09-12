@@ -48,8 +48,8 @@ const smartFallback = async (messages: Array<{role: string, content: string}>): 
   const lastUserMessage = userMessages[userMessages.length - 1]?.content?.toLowerCase() || '';
   const currentStep = userMessages.length;
 
-  // Validar si la respuesta es muy corta o irrelevante
-  if (currentStep > 1 && (lastUserMessage.length < 3 || isIrrelevantResponse(lastUserMessage, currentStep - 1))) {
+  // Validar si la respuesta es muy corta o irrelevante (incluye el primer paso)
+  if (currentStep >= 1 && (lastUserMessage.length < 3 || isIrrelevantResponse(lastUserMessage, currentStep - 1))) {
     return getValidationMessage(currentStep - 1);
   }
 
@@ -69,31 +69,36 @@ const smartFallback = async (messages: Array<{role: string, content: string}>): 
 };
 
 const isIrrelevantResponse = (response: string, step: number): boolean => {
-  const irrelevantWords = ['hola', 'hi', 'hello', 'ok', 'si', 'no', 'bien', 'gracias'];
+  const irrelevantWords = ['hola', 'hi', 'hello', 'ok', 'si', 'no', 'bien', 'gracias', 'bueno', 'perfecto'];
   const words = response.split(' ').filter(word => word.length > 0);
   
-  // Si solo tiene 1-2 palabras muy básicas
-  if (words.length <= 2 && words.some(word => irrelevantWords.includes(word))) {
+  // Si solo tiene 1-3 palabras muy básicas, siempre es irrelevante
+  if (words.length <= 3 && words.every(word => irrelevantWords.includes(word.toLowerCase()))) {
+    return true;
+  }
+  
+  // Para respuestas muy cortas (menos de 5 caracteres), validar más estrictamente
+  if (response.length <= 5) {
     return true;
   }
   
   // Respuestas que no corresponden al tema según el paso
   const stepKeywords = [
-    ['empresa', 'compañía', 'negocio', 'marca'], // Paso 1: Branding
-    ['hace', 'dedica', 'servicio', 'producto'], // Paso 2: Identidad
-    ['promesa', 'valor', 'ofrece', 'beneficio'], // Paso 3: Propuesta valor
-    ['problema', 'dificultad', 'resuelve'], // Paso 4: Problemas
-    ['solución', 'método', 'sistema', 'como'], // Paso 5: Solución
-    ['testimonio', 'caso', 'prueba', 'cliente'], // Paso 6: Prueba social
-    ['oferta', 'precio', 'incluye', 'producto'], // Paso 7: Oferta
-    ['acción', 'llamada', 'cliente', 'hacer'] // Paso 8: CTA
+    ['empresa', 'compañía', 'negocio', 'marca', 'color', 'nombre', 'llama', 'somos'], // Paso 0: Branding
+    ['hace', 'dedica', 'servicio', 'producto', 'ofrece', 'vende'], // Paso 1: Identidad
+    ['promesa', 'valor', 'ofrece', 'beneficio', 'única', 'diferente'], // Paso 2: Propuesta valor
+    ['problema', 'dificultad', 'resuelve', 'soluciona', 'ayuda'], // Paso 3: Problemas
+    ['solución', 'método', 'sistema', 'como', 'proceso', 'manera'], // Paso 4: Solución
+    ['testimonio', 'caso', 'prueba', 'cliente', 'éxito', 'resultado'], // Paso 5: Prueba social
+    ['oferta', 'precio', 'incluye', 'producto', 'cuesta', 'vale'], // Paso 6: Oferta
+    ['acción', 'llamada', 'cliente', 'hacer', 'contacto', 'comprar'] // Paso 7: CTA
   ];
   
   if (step < stepKeywords.length) {
     const hasRelevantKeywords = stepKeywords[step].some(keyword => 
-      response.includes(keyword)
+      response.toLowerCase().includes(keyword)
     );
-    return !hasRelevantKeywords && response.length < 20;
+    return !hasRelevantKeywords && response.length < 15;
   }
   
   return false;
