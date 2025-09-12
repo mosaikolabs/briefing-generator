@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { BriefingData } from '../types';
 
-const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
+// const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 const MAKE_WEBHOOK_URL = import.meta.env.VITE_MAKE_WEBHOOK_URL;
 
 // Simulador de preguntas para demo (en producción usarías un backend)

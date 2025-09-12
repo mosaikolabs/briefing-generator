@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ChatMessage, BriefingData, INITIAL_BRIEFING } from '../types';
-import { WELCOME_MESSAGE, SYSTEM_PROMPT } from '../constants';
+import { WELCOME_MESSAGE } from '../constants';
 import { sendMessageToClaude, sendBriefingToMake } from '../services/api';
 
 export const useChat = () => {
