@@ -49,15 +49,6 @@ export const useChat = () => {
       const allMessages = [...messages, userMsg];
       const aiResponse = await sendMessageToClaude(allMessages.map(msg => ({ role: msg.role, content: msg.content })));
       
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMsg]);
-      
       // Solo avanzar si la respuesta no es de validación
       const isValidationMessage = aiResponse.toLowerCase().includes('necesito') || 
                                   aiResponse.toLowerCase().includes('podrías') ||
@@ -73,11 +64,29 @@ export const useChat = () => {
         
         // Avanzar al siguiente paso
         if (currentStep < 8) {
+          // Para pasos normales, agregar el mensaje
+          const aiMsg: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: aiResponse,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, aiMsg]);
           setCurrentStep(prev => prev + 1);
         } else {
+          // Para el paso final, no agregar a mensajes, solo guardar briefing
           setIsComplete(true);
           setFinalBriefing(aiResponse);
         }
+      } else {
+        // Para mensajes de validación, sí agregar al chat
+        const aiMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: aiResponse,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMsg]);
       }
       
     } catch (error) {
