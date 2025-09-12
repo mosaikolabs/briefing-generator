@@ -17,6 +17,7 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [finalBriefing, setFinalBriefing] = useState<string>('');
 
   const updateBrandingColors = useCallback((primary: string, secondary: string, company: string) => {
     document.documentElement.style.setProperty('--color-client-primary', primary);
@@ -75,7 +76,7 @@ export const useChat = () => {
           setCurrentStep(prev => prev + 1);
         } else {
           setIsComplete(true);
-          await sendBriefingToMake(briefingData, aiResponse);
+          setFinalBriefing(aiResponse);
         }
       }
       
@@ -93,13 +94,45 @@ export const useChat = () => {
     }
   }, [messages, briefingData, currentStep, isLoading, updateBrandingColors]);
 
+  const editBriefing = useCallback(() => {
+    setIsComplete(false);
+    setCurrentStep(1);
+    setFinalBriefing('');
+    setMessages([
+      {
+        id: '1',
+        role: 'assistant',
+        content: WELCOME_MESSAGE,
+        timestamp: new Date()
+      }
+    ]);
+  }, []);
+
+  const sendToProduction = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const success = await sendBriefingToMake(briefingData, finalBriefing);
+      if (!success) {
+        throw new Error('Failed to send briefing');
+      }
+    } catch (error) {
+      console.error('Error sending to production:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [briefingData, finalBriefing]);
+
   return {
     messages,
     sendMessage,
     briefingData,
     isLoading,
     isComplete,
-    currentStep
+    currentStep,
+    finalBriefing,
+    editBriefing,
+    sendToProduction
   };
 };
 
