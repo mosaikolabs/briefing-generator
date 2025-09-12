@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ChatMessage, BriefingData, INITIAL_BRIEFING } from '../types';
-import { WELCOME_MESSAGE } from '../constants';
+import { QUESTIONS } from '../constants';
 import { sendMessageToClaude, sendBriefingToMake } from '../services/api';
 
 export const useChat = () => {
@@ -8,7 +8,7 @@ export const useChat = () => {
     {
       id: '1',
       role: 'assistant',
-      content: WELCOME_MESSAGE,
+      content: QUESTIONS[0],
       timestamp: new Date()
     }
   ]);
@@ -18,6 +18,8 @@ export const useChat = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [finalBriefing, setFinalBriefing] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<string[]>([]);
 
   const updateBrandingColors = useCallback((primary: string, secondary: string, company: string) => {
     document.documentElement.style.setProperty('--color-client-primary', primary);
@@ -30,6 +32,32 @@ export const useChat = () => {
       companyName: company
     }));
   }, []);
+
+  const handleGoToQuestion = useCallback((questionNumber: number) => {
+    if (questionNumber < 1 || questionNumber > QUESTIONS.length) return;
+
+    const newMessages: ChatMessage[] = [
+      {
+        id: `question-${questionNumber}`,
+        role: 'assistant',
+        content: QUESTIONS[questionNumber - 1],
+        timestamp: new Date()
+      }
+    ];
+
+    if (userAnswers[questionNumber - 1]) {
+      newMessages.push({
+        id: `user-answer-${questionNumber}`,
+        role: 'user',
+        content: userAnswers[questionNumber - 1],
+        timestamp: new Date(),
+      });
+    }
+
+    setMessages(newMessages);
+    setCurrentStep(questionNumber);
+
+  }, [userAnswers]);
 
   const sendMessage = useCallback(async (userMessage: string) => {
     if (isLoading) return;
@@ -45,41 +73,61 @@ export const useChat = () => {
     
     setMessages(prev => [...prev, userMsg]);
     
+    const newUserAnswers = [...userAnswers];
+    newUserAnswers[currentStep - 1] = userMessage;
+    setUserAnswers(newUserAnswers);
+
+    if (isEditing) {
+      setIsLoading(false);
+      if (currentStep < QUESTIONS.length) {
+        handleGoToQuestion(currentStep + 1);
+      } else {
+        // Last question in edit mode, regenerate briefing
+        const allMessagesForBriefing = newUserAnswers.map((answer, index) => {
+          return [
+            { role: 'assistant', content: QUESTIONS[index] },
+            { role: 'user', content: answer }
+          ];
+        }).flat();
+
+        const aiResponse = await sendMessageToClaude(allMessagesForBriefing);
+        setFinalBriefing(aiResponse);
+        setIsEditing(false);
+        setIsComplete(true);
+      }
+      return;
+    }
+
     try {
       const allMessages = [...messages, userMsg];
       const aiResponse = await sendMessageToClaude(allMessages.map(msg => ({ role: msg.role, content: msg.content })));
       
-      // Solo avanzar si la respuesta no es de validación
       const isValidationMessage = aiResponse.toLowerCase().includes('necesito') || 
                                   aiResponse.toLowerCase().includes('podrías') ||
                                   aiResponse.toLowerCase().includes('específica');
       
       if (!isValidationMessage) {
-        // Extraer información del primer mensaje (empresa y colores)
         if (currentStep === 1) {
           const colors = extractColors(userMessage);
           const companyName = extractCompanyName(userMessage);
           updateBrandingColors(colors.primary, colors.secondary, companyName);
         }
         
-        // Avanzar al siguiente paso
-        if (currentStep < 8) {
-          // Para pasos normales, agregar el mensaje
+        if (currentStep < QUESTIONS.length) {
+          const nextQuestion = QUESTIONS[currentStep];
           const aiMsg: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: aiResponse,
+            content: nextQuestion,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, aiMsg]);
           setCurrentStep(prev => prev + 1);
         } else {
-          // Para el paso final, no agregar a mensajes, solo guardar briefing
           setIsComplete(true);
           setFinalBriefing(aiResponse);
         }
       } else {
-        // Para mensajes de validación, sí agregar al chat
         const aiMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -101,21 +149,18 @@ export const useChat = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, briefingData, currentStep, isLoading, updateBrandingColors]);
+  }, [messages, currentStep, isLoading, updateBrandingColors, userAnswers, isEditing, handleGoToQuestion]);
+
+  const startEditing = useCallback(() => {
+    setIsEditing(true);
+    setIsComplete(false);
+    setFinalBriefing('');
+    handleGoToQuestion(1);
+  }, [handleGoToQuestion]);
 
   const editBriefing = useCallback(() => {
-    setIsComplete(false);
-    setCurrentStep(1);
-    setFinalBriefing('');
-    setMessages([
-      {
-        id: '1',
-        role: 'assistant',
-        content: WELCOME_MESSAGE,
-        timestamp: new Date()
-      }
-    ]);
-  }, []);
+    startEditing();
+  }, [startEditing]);
 
   const sendToProduction = useCallback(async () => {
     setIsLoading(true);
@@ -141,7 +186,10 @@ export const useChat = () => {
     currentStep,
     finalBriefing,
     editBriefing,
-    sendToProduction
+    sendToProduction,
+    isEditing,
+    handleGoToQuestion,
+    userAnswers
   };
 };
 

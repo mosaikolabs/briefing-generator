@@ -27,3 +27,15 @@ Después de la pregunta 8 y solo si tienes toda la información, genera un brief
 `;
 
 export const WELCOME_MESSAGE = "¡Hola! Soy WebCraft, tu asistente para crear briefings de landing pages. Te haré algunas preguntas para crear un briefing completo y profesional para tu página web.\n\n¿Empezamos con el nombre de tu empresa y tus colores de marca preferidos?";
+
+export const QUESTIONS = [
+  '¿Cuál es el nombre de tu empresa y cuáles son tus colores de marca principal y secundario? (en formato hexadecimal, ej: #F0F0F0)',
+  '¿Cuál es el titular principal que quieres en tu landing page? Debe ser corto y llamativo.',
+  'Describe tu producto o servicio en un párrafo. ¿Qué problema resuelve y para quién?',
+  '¿Cuáles son las 3 características o beneficios más importantes de tu producto/servicio? (separados por comas)',
+  '¿Tienes alguna oferta especial o llamada a la acción (CTA) que quieras destacar? (ej: "20% de descuento", "Regístrate gratis")',
+  '¿Qué tono de comunicación prefieres? (ej: formal, amigable, divertido, profesional)',
+  '¿Hay algún elemento visual clave que quieras incluir? (ej: logo, una imagen específica, un video)',
+  'Finalmente, ¿cuál es el objetivo principal de tu landing page? (ej: captar leads, vender un producto, obtener registros)',
+];
+;
