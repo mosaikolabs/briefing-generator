@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ChatMessage, BriefingData, INITIAL_BRIEFING } from '../types';
-import { QUESTIONS } from '../constants';
+import { QUESTIONS, WELCOME_MESSAGE } from '../constants';
 import { sendMessageToClaude, sendBriefingToMake } from '../services/api';
 
 export const useChat = () => {
@@ -8,7 +8,7 @@ export const useChat = () => {
     {
       id: '1',
       role: 'assistant',
-      content: QUESTIONS[0],
+      content: WELCOME_MESSAGE,
       timestamp: new Date()
     }
   ]);
@@ -16,7 +16,7 @@ export const useChat = () => {
   const [briefingData, setBriefingData] = useState<BriefingData>(INITIAL_BRIEFING);
   const [isLoading, setIsLoading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [finalBriefing, setFinalBriefing] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
@@ -74,8 +74,10 @@ export const useChat = () => {
     setMessages(prev => [...prev, userMsg]);
     
     const newUserAnswers = [...userAnswers];
-    newUserAnswers[currentStep - 1] = userMessage;
-    setUserAnswers(newUserAnswers);
+    if (currentStep > 0) {
+      newUserAnswers[currentStep - 1] = userMessage;
+      setUserAnswers(newUserAnswers);
+    }
 
     if (isEditing) {
       setIsLoading(false);
@@ -107,25 +109,39 @@ export const useChat = () => {
                                   aiResponse.toLowerCase().includes('específica');
       
       if (!isValidationMessage) {
-        if (currentStep === 1) {
-          const colors = extractColors(userMessage);
-          const companyName = extractCompanyName(userMessage);
-          updateBrandingColors(colors.primary, colors.secondary, companyName);
-        }
-        
-        if (currentStep < QUESTIONS.length) {
-          const nextQuestion = QUESTIONS[currentStep];
+        // Si estamos en el paso 0 (welcome message), mostrar primera pregunta
+        if (currentStep === 0) {
+          const firstQuestion = QUESTIONS[0];
           const aiMsg: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: nextQuestion,
+            content: firstQuestion,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, aiMsg]);
-          setCurrentStep(prev => prev + 1);
+          setCurrentStep(1);
         } else {
-          setIsComplete(true);
-          setFinalBriefing(aiResponse);
+          // Lógica existente para el resto de preguntas
+          if (currentStep === 1) {
+            const colors = extractColors(userMessage);
+            const companyName = extractCompanyName(userMessage);
+            updateBrandingColors(colors.primary, colors.secondary, companyName);
+          }
+          
+          if (currentStep < QUESTIONS.length) {
+            const nextQuestion = QUESTIONS[currentStep];
+            const aiMsg: ChatMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: nextQuestion,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, aiMsg]);
+            setCurrentStep(prev => prev + 1);
+          } else {
+            setIsComplete(true);
+            setFinalBriefing(aiResponse);
+          }
         }
       } else {
         const aiMsg: ChatMessage = {

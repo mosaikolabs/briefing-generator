@@ -26,7 +26,7 @@ VALIDACIÓN DE RESPUESTAS:
 Después de la pregunta 8 y solo si tienes toda la información, genera un briefing final en formato markdown.
 `;
 
-export const WELCOME_MESSAGE = "¡Hola! Soy WebCraft, tu asistente para crear briefings de landing pages. Te haré algunas preguntas para crear un briefing completo y profesional para tu página web.\n\n¿Empezamos con el nombre de tu empresa y tus colores de marca preferidos?";
+export const WELCOME_MESSAGE = "¡Hola! 👋 Soy WebCraft, tu asistente especializado en landing pages. Mi propósito es ayudarte a crear un briefing completo y profesional para tu página web a través de una conversación guiada.\n\n🎯 **¿Cómo puedo ayudarte?**\nTe haré exactamente 8 preguntas estratégicas que recopilarán toda la información necesaria para crear una landing page que realmente convierta y represente tu marca.\n\n⚠️ **Importante:** Este sistema aún no ha sido completamente testeado, por lo que es crucial que respondas exactamente lo que te pregunto en cada paso. La calidad de tu landing page dependerá directamente de la precisión de tus respuestas.\n\n✨ **¿Empezamos?**\nComencemos con la información básica de tu marca:";
 
 export const QUESTIONS = [
   '¿Cuál es el nombre de tu empresa y cuáles son tus colores de marca principal y secundario? (en formato hexadecimal, ej: #F0F0F0)',

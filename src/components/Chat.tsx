@@ -75,7 +75,7 @@ export const Chat = () => {
             {briefingData.companyName || 'WebCraft AI'}
           </h1>
           <p className="text-primary-100 opacity-90 font-medium">
-            {isEditing ? 'Editando Briefing' : `Pregunta ${currentStep}/${QUESTIONS.length} • Chat de Briefing`}
+            {isEditing ? 'Editando Briefing' : currentStep === 0 ? 'Presentación • Chat de Briefing' : `Pregunta ${currentStep}/${QUESTIONS.length} • Chat de Briefing`}
           </p>
         </div>
       </header>

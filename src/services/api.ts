@@ -48,12 +48,8 @@ const smartFallback = async (messages: Array<{role: string, content: string}>): 
   const lastUserMessage = userMessages[userMessages.length - 1]?.content?.toLowerCase() || '';
   const currentStep = userMessages.length;
 
-  // Validar si la respuesta es muy corta o irrelevante (incluye el primer paso)
-  if (currentStep >= 1 && (lastUserMessage.length < 3 || isIrrelevantResponse(lastUserMessage, currentStep - 1))) {
-    return getValidationMessage(currentStep - 1);
-  }
-
   const questions = [
+    "¿Cuál es el nombre de tu empresa y cuáles son tus colores de marca principal y secundario? (en formato hexadecimal, ej: #F0F0F0)",
     "Perfecto! Ahora cuéntame, ¿qué hace exactamente tu empresa? ¿A qué se dedica?",
     "Excelente! Necesito saber: ¿Qué promesa específica y medible le ofreces a tus clientes? ¿Cuál es tu propuesta de valor única?",
     "Muy bien! Dime, ¿cuáles son los 3 problemas principales que resuelve tu producto o servicio para tus clientes?",
@@ -63,8 +59,18 @@ const smartFallback = async (messages: Array<{role: string, content: string}>): 
     "¡Casi terminamos! ¿Qué acción específica quieres que tomen tus clientes? ¿Cuál es tu llamada a la acción principal?",
     generateFinalBriefing(messages)
   ];
+
+  // Si es la primera respuesta del usuario (paso 0), mostrar la primera pregunta real
+  if (currentStep === 1) {
+    return questions[0];
+  }
+
+  // Validar si la respuesta es muy corta o irrelevante (a partir del paso 1)
+  if (currentStep >= 2 && (lastUserMessage.length < 3 || isIrrelevantResponse(lastUserMessage, currentStep - 2))) {
+    return getValidationMessage(currentStep - 2);
+  }
   
-  const questionIndex = Math.min(currentStep - 1, questions.length - 1);
+  const questionIndex = Math.min(currentStep - 2, questions.length - 1);
   return questions[questionIndex];
 };
 
@@ -176,7 +182,73 @@ const formatProblems = (text: string): string => {
   return sentences.slice(0, 3).map((s, i) => `${i + 1}. ${s.trim()}`).join('\n');
 };
 
+export const generateCSV = (briefingData: BriefingData, fullBriefing: string): string => {
+  const headers = [
+    'company_name',
+    'primary_color',
+    'secondary_color',
+    'value_proposition',
+    'problems',
+    'solution',
+    'testimonials',
+    'offer',
+    'cta',
+    'timestamp',
+    'status',
+    'full_briefing'
+  ];
+
+  const escapeCSVField = (field: string): string => {
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  };
+
+  const row = [
+    escapeCSVField(briefingData.companyName || ''),
+    escapeCSVField(briefingData.primaryColor || ''),
+    escapeCSVField(briefingData.secondaryColor || ''),
+    escapeCSVField(briefingData.valueProposition || ''),
+    escapeCSVField(Array.isArray(briefingData.problems) ? briefingData.problems.join('; ') : briefingData.problems || ''),
+    escapeCSVField(briefingData.solution || ''),
+    escapeCSVField(briefingData.testimonials || ''),
+    escapeCSVField(briefingData.offer || ''),
+    escapeCSVField(briefingData.cta || ''),
+    escapeCSVField(new Date().toISOString()),
+    escapeCSVField('completed'),
+    escapeCSVField(fullBriefing || '')
+  ];
+
+  return headers.join(',') + '\n' + row.join(',');
+};
+
+export const downloadCSV = (briefingData: BriefingData, fullBriefing: string): void => {
+  const csvContent = generateCSV(briefingData, fullBriefing);
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `briefing-${briefingData.companyName || 'empresa'}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
+
 export const sendBriefingToMake = async (briefingData: BriefingData, fullBriefing: string): Promise<boolean> => {
+  // Generate CSV file automatically for internal tracking (invisible to user)
+  try {
+    downloadCSV(briefingData, fullBriefing);
+    console.log('CSV generated successfully for internal tracking');
+  } catch (error) {
+    console.error('Error generating CSV for internal tracking:', error);
+    // Continue with webhook even if CSV fails
+  }
+
   if (!MAKE_WEBHOOK_URL) {
     console.log('MAKE_WEBHOOK_URL not configured, skipping webhook');
     return true;

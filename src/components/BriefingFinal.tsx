@@ -8,11 +8,11 @@ interface BriefingFinalProps {
   isLoading?: boolean;
 }
 
-export const BriefingFinal: React.FC<BriefingFinalProps> = ({ 
-  briefingContent, 
-  onEdit, 
+export const BriefingFinal: React.FC<BriefingFinalProps> = ({
+  briefingContent,
+  onEdit,
   onSendToProduction,
-  isLoading = false 
+  isLoading = false
 }) => {
   const [isAgreed, setIsAgreed] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -22,11 +22,12 @@ export const BriefingFinal: React.FC<BriefingFinalProps> = ({
       alert('Debes aceptar la declaración antes de enviar a producción.');
       return;
     }
-    
+
     await onSendToProduction();
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
+
 
   return (
     <div className="container-max section-padding">
@@ -112,8 +113,8 @@ export const BriefingFinal: React.FC<BriefingFinalProps> = ({
             onClick={handleSendToProduction}
             disabled={!isAgreed || isLoading}
             className={`flex flex-1 items-center justify-center space-x-3 px-8 py-4 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg transform hover:-translate-y-1 ${
-              isAgreed 
-                ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white hover:shadow-2xl animate-pulseGlow' 
+              isAgreed
+                ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white hover:shadow-2xl animate-pulseGlow'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
