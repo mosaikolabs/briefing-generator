@@ -3,7 +3,6 @@ import { BriefingData } from '../types';
 import { SYSTEM_PROMPT } from '../constants';
 
 const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
-const MAKE_WEBHOOK_URL = import.meta.env.VITE_MAKE_WEBHOOK_URL;
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
 export const sendMessageToClaude = async (messages: Array<{role: string, content: string}>): Promise<string> => {
@@ -182,77 +181,9 @@ const formatProblems = (text: string): string => {
   return sentences.slice(0, 3).map((s, i) => `${i + 1}. ${s.trim()}`).join('\n');
 };
 
-export const generateCSV = (briefingData: BriefingData, fullBriefing: string): string => {
-  const headers = [
-    'company_name',
-    'primary_color',
-    'secondary_color',
-    'value_proposition',
-    'problems',
-    'solution',
-    'testimonials',
-    'offer',
-    'cta',
-    'timestamp',
-    'status',
-    'full_briefing'
-  ];
-
-  const escapeCSVField = (field: string): string => {
-    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-      return `"${field.replace(/"/g, '""')}"`;
-    }
-    return field;
-  };
-
-  const row = [
-    escapeCSVField(briefingData.companyName || ''),
-    escapeCSVField(briefingData.primaryColor || ''),
-    escapeCSVField(briefingData.secondaryColor || ''),
-    escapeCSVField(briefingData.valueProposition || ''),
-    escapeCSVField(Array.isArray(briefingData.problems) ? briefingData.problems.join('; ') : briefingData.problems || ''),
-    escapeCSVField(briefingData.solution || ''),
-    escapeCSVField(briefingData.testimonials || ''),
-    escapeCSVField(briefingData.offer || ''),
-    escapeCSVField(briefingData.cta || ''),
-    escapeCSVField(new Date().toISOString()),
-    escapeCSVField('completed'),
-    escapeCSVField(fullBriefing || '')
-  ];
-
-  return headers.join(',') + '\n' + row.join(',');
-};
-
-export const downloadCSV = (briefingData: BriefingData, fullBriefing: string): void => {
-  const csvContent = generateCSV(briefingData, fullBriefing);
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `briefing-${briefingData.companyName || 'empresa'}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-};
 
 export const sendBriefingToMake = async (briefingData: BriefingData, fullBriefing: string): Promise<boolean> => {
-  // Generate CSV file automatically for internal tracking (invisible to user)
-  try {
-    downloadCSV(briefingData, fullBriefing);
-    console.log('CSV generated successfully for internal tracking');
-  } catch (error) {
-    console.error('Error generating CSV for internal tracking:', error);
-    // Continue with webhook even if CSV fails
-  }
-
-  if (!MAKE_WEBHOOK_URL) {
-    console.log('MAKE_WEBHOOK_URL not configured, skipping webhook');
-    return true;
-  }
+  const MAKE_WEBHOOK_URL = 'https://hook.us2.make.com/bjiibip9gbk3ybaldba4cp6mynxzrsde';
 
   try {
     const payload = {
@@ -277,6 +208,7 @@ export const sendBriefingToMake = async (briefingData: BriefingData, fullBriefin
     };
 
     await axios.post(MAKE_WEBHOOK_URL, payload);
+    console.log('Briefing sent successfully to Make.com');
     return true;
   } catch (error) {
     console.error('Error sending to Make.com:', error);
