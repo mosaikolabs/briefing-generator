@@ -118,7 +118,7 @@ export const Chat = () => {
 
       <div className="p-6 bg-white border-t border-gray-200 shadow-lg">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-          <div className="flex space-x-4">
+          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
             <input
               type="text"
               value={inputValue}
@@ -130,20 +130,20 @@ export const Chat = () => {
             <button
               type="submit"
               disabled={isLoading || !inputValue.trim()}
-              className="bg-gradient-to-r from-primary-600 to-accent-600 text-white px-8 py-4 rounded-2xl hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none font-bold text-lg animate-pulseGlow"
+              className="bg-gradient-to-r from-primary-600 to-accent-600 text-white px-8 py-4 rounded-2xl hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none font-bold text-lg animate-pulseGlow w-full md:w-auto"
             >
               {isLoading ? (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>{isEditing ? 'Actualizando...' : 'Enviando...'}</span>
                 </div>
               ) : (
-                <>
+                <div className="flex items-center justify-center">
                   <span>{isEditing ? (currentStep === QUESTIONS.length ? 'Finalizar Edición' : 'Actualizar') : 'Enviar'}</span>
                   <svg className="inline-block ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </>
+                </div>
               )}
             </button>
           </div>
